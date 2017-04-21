@@ -4,9 +4,7 @@ var mysql = require("mysql");
 var connection = require('../../dbConnection');
 
 exports.get_all_measurements = function(req, res) {
-  var query = "SELECT * FROM ??";
-  var table = ["measurements"];
-  query = mysql.format(query,table);
+  var query = "SELECT measurements.*, sources.type AS source_type FROM measurements JOIN sources ON measurements.source_id = sources.id";
   connection.query(query,function(err,rows){
     if(err) {
         res.json({"Error" : true, "Message" : "Error executing MySQL query"});
