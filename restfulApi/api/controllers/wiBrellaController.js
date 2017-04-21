@@ -43,3 +43,29 @@ exports.create_a_source = function(req, res) {
     }
   });
 };
+
+exports.check_rain_power_within_point_radius = function (req, res) {
+  var query = "SELECT id, rain_power, " +
+              "( 6371 * acos( " +
+              "cos( radians(?) ) " +
+              "* cos( radians( y_coordinate ) ) " +
+              "* cos( radians( x_coordinate ) - radians(?) ) " +
+              "+ sin( radians(?) ) " +
+              "* sin( radians( y_coordinate ) ) ) ) AS distance " +
+              "FROM ?? " +
+              "WHERE datetime >= NOW() - INTERVAL 15 MINUTE " +
+              "HAVING distance < 1.5 " +
+              "ORDER BY rain_power DESC " +
+              "LIMIT 1";
+  var table = [req.query.lat, req.query.long, req.query.lat, "measurements"];
+  query = mysql.format(query,table);
+  connection.query(query,function(err,rows){
+    if(err) {
+        res.json({"Error" : true, "Message" : "Error executing MySQL query"});
+    } else if (rows.length > 0) {
+        res.json(rows[0].rain_power);
+    } else {
+        res.json(-1);
+    }
+  });
+};

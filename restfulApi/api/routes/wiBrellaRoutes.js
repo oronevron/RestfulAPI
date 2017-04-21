@@ -10,6 +10,9 @@ module.exports = function(app) {
   app.route('/sources')
     .post(WiBrella.create_a_source);
 
+  app.route('/isRaining')
+    .get(WiBrella.check_rain_power_within_point_radius);
+
   // app.route('/tasks/:taskId')
   //   .get(WiBrella.read_a_task)
   //   .put(WiBrella.update_a_task)
