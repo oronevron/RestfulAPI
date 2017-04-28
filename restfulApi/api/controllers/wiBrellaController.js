@@ -15,17 +15,73 @@ exports.get_all_measurements = function(req, res) {
 };
 
 exports.create_a_measurement = function(req, res) {
-  var query = "INSERT INTO ?? VALUES (default,?,now(),?,?,?,?,?,?,?)";
-  var table = ["measurements", req.body.source_id, req.body.x_coordinate, req.body.y_coordinate, req.body.rain_power, req.body.temperature, req.body.humidity, req.body.sea_level, req.body.air_pollution];
-  query = mysql.format(query,table);
-  console.log("query: ", query);
-  connection.query(query,function(err,rows){
-    if(err) {
-        res.json({"Error" : true, "Message" : err});
+    var find_query = "SELECT id " +
+        "FROM ?? " +
+        "WHERE source_id = ?" +
+        " AND x_coordinate = ?" +
+        " AND y_coordinate = ?" +
+        " AND rain_power = ?" +
+        " AND temperature = ?";
+    var find_table = ["measurements", req.body.source_id, req.body.x_coordinate, req.body.y_coordinate, req.body.rain_power, req.body.temperature];
+
+    find_query += " AND humidity ";
+    if (req.body.humidity == null) {
+        find_query += 'IS NULL';
     } else {
-        res.json({"Error" : false, "Message" : "Success", "Added measurement" : rows});
+        find_query += '= ?';
+        find_table.push(req.body.humidity);
     }
-  });
+
+    find_query += " AND sea_level ";
+    if (req.body.sea_level == null) {
+        find_query += 'IS NULL';
+    } else {
+        find_query += '= ?';
+        find_table.push(req.body.sea_level);
+    }
+
+    find_query += " AND air_pollution ";
+    if (req.body.air_pollution == null) {
+        find_query += 'IS NULL';
+    } else {
+        find_query += '= ?';
+        find_table.push(req.body.air_pollution);
+    }
+
+    find_query += " LIMIT 1";
+    find_query = mysql.format(find_query,find_table);
+    console.log("find query: ", find_query);
+    connection.query(find_query,function(err,rows){
+        if(err) {
+            res.json({"Error" : true, "Message" : "Error executing MySQL query"});
+        } else if (rows.length > 0) {
+            console.log("TO UPDATE");
+            var query = "UPDATE ?? SET datetime = NOW() WHERE id = ?";
+            var table = ["measurements", rows[0].id];
+            query = mysql.format(query,table);
+            console.log("query: ", query);
+            connection.query(query,function(err,rows){
+                if(err) {
+                    res.json({"Error" : true, "Message" : err});
+                } else {
+                    res.json({"Error" : false, "Message" : "Success", "Updated measurement" : rows});
+                }
+            });
+        } else {
+            console.log("TO INSERT");
+            var query = "INSERT INTO ?? VALUES (default,?,now(),?,?,?,?,?,?,?)";
+            var table = ["measurements", req.body.source_id, req.body.x_coordinate, req.body.y_coordinate, req.body.rain_power, req.body.temperature, req.body.humidity, req.body.sea_level, req.body.air_pollution];
+            query = mysql.format(query,table);
+            console.log("query: ", query);
+            connection.query(query,function(err,rows){
+                if(err) {
+                    res.json({"Error" : true, "Message" : err});
+                } else {
+                    res.json({"Error" : false, "Message" : "Success", "Added measurement" : rows});
+                }
+            });
+        }
+    });
 };
 
 exports.create_a_source = function(req, res) {
