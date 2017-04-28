@@ -4,14 +4,30 @@ var mysql = require("mysql");
 var connection = require('../../dbConnection');
 
 exports.get_all_measurements = function(req, res) {
-  var query = "SELECT measurements.*, sources.type AS source_type FROM measurements JOIN sources ON measurements.source_id = sources.id";
-  connection.query(query,function(err,rows){
-    if(err) {
-        res.json({"Error" : true, "Message" : "Error executing MySQL query"});
+
+    // If parameter called "all" is sent with "true" value - Get all measurements
+    if (req.query.all == "true") {
+        var query = "SELECT measurements.*, sources.type AS source_type FROM measurements JOIN sources ON measurements.source_id = sources.id";
+
+    // Otherwise - Get the most three new measurements for each source
     } else {
-        res.json({"Error" : false, "Message" : "Success", "Measurements" : rows});
+        var query = "SELECT id, source_id, datetime, x_coordinate, y_coordinate, rain_power, temperature, humidity, sea_level, air_pollution FROM" +
+                " (SELECT *," +
+                " @source_id_rank := IF(@current_source_id = source_id, @source_id_rank + 1, 1) AS source_id_rank," +
+                " @current_source_id := source_id" +
+                " FROM measurements" +
+                " ORDER BY source_id, datetime DESC" +
+                " ) ranked" +
+                " WHERE source_id_rank <= 3";
     }
-  });
+
+    connection.query(query, function (err, rows) {
+        if (err) {
+            res.json({"Error": true, "Message": "Error executing MySQL query"});
+        } else {
+            res.json({"Error": false, "Message": "Success", "Measurements": rows});
+        }
+    });
 };
 
 exports.create_a_measurement = function(req, res) {
