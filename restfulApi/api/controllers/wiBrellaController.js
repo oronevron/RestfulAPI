@@ -108,11 +108,22 @@ exports.check_rain_power_within_point_radius = function (req, res) {
               "* sin( radians( y_coordinate ) ) ) ) AS distance " +
               "FROM ?? " +
               "WHERE datetime >= NOW() - INTERVAL 15 MINUTE " +
-              "HAVING distance < 1.5 " +
+              "HAVING distance < ? " +
               "ORDER BY rain_power DESC " +
               "LIMIT 1";
-  var table = [req.query.lat, req.query.long, req.query.lat, "measurements"];
+
+  // Set default value to maximum distance (For requests from the kit)
+  var maximum_distance = 1.5;
+
+  // Set request parameter to maximum distance value (For requests from the mobile application)
+  if (req.query.radius != null) {
+      maximum_distance = parseFloat(req.query.radius);
+  }
+
+  var table = [req.query.lat, req.query.long, req.query.lat, "measurements", maximum_distance];
   query = mysql.format(query,table);
+  console.log("maximum_distance: ", maximum_distance);
+  console.log(query);
   connection.query(query,function(err,rows){
     if(err) {
         res.json({"Error" : true, "Message" : "Error executing MySQL query"});
