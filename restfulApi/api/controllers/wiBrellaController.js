@@ -11,14 +11,16 @@ exports.get_all_measurements = function(req, res) {
 
     // Otherwise - Get the most three new measurements for each source
     } else {
-        var query = "SELECT id, source_id, datetime, x_coordinate, y_coordinate, rain_power, temperature, humidity, sea_level, air_pollution FROM" +
-                " (SELECT *," +
-                " @source_id_rank := IF(@current_source_id = source_id, @source_id_rank + 1, 1) AS source_id_rank," +
-                " @current_source_id := source_id" +
+        var query = "SELECT id, source_id, datetime, x_coordinate, y_coordinate, rain_power, temperature, humidity, sea_level, air_pollution, source_type FROM" +
+                " (SELECT measurements.*, sources.type AS source_type," +
+                " @source_id_rank := IF(@current_source_id = measurements.source_id, @source_id_rank + 1, 1) AS source_id_rank," +
+                " @current_source_id := measurements.source_id" +
                 " FROM measurements" +
-                " ORDER BY source_id, datetime DESC" +
+                " JOIN sources ON measurements.source_id = sources.id" +
+                " ORDER BY measurements.source_id, measurements.datetime DESC" +
                 " ) ranked" +
                 " WHERE source_id_rank <= 3";
+        console.log(query);
     }
 
     connection.query(query, function (err, rows) {
