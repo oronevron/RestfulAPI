@@ -48,9 +48,16 @@ exports.create_a_measurement = function(req, res) {
         "WHERE source_id = ?" +
         " AND x_coordinate = ?" +
         " AND y_coordinate = ?" +
-        " AND rain_power = ?" +
-        " AND temperature = ?";
-    var find_table = ["measurements", req.body.source_id, req.body.x_coordinate, req.body.y_coordinate, req.body.rain_power, req.body.temperature];
+        " AND rain_power = ?";
+    var find_table = ["measurements", req.body.source_id, req.body.x_coordinate, req.body.y_coordinate, req.body.rain_power];
+
+    find_query += " AND temperature ";
+    if (req.body.temperature == null) {
+        find_query += 'IS NULL';
+    } else {
+        find_query += '= ?';
+        find_table.push(req.body.temperature);
+    }
 
     find_query += " AND humidity ";
     if (req.body.humidity == null) {
