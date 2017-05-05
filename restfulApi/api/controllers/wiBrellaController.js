@@ -24,7 +24,7 @@ exports.get_all_measurements = function(req, res) {
                 " @source_id_rank := IF(@current_source_id = measurements.source_id, @source_id_rank + 1, 1) AS source_id_rank," +
                 " @current_source_id := measurements.source_id" +
                 " FROM measurements" +
-                " JOIN sources ON measurements.source_id = sources.id" +
+                " LEFT OUTER JOIN sources ON measurements.source_id = sources.id" +
                 " ORDER BY measurements.source_id, measurements.datetime DESC" +
                 " ) ranked" +
                 " WHERE source_id_rank <= ?";
