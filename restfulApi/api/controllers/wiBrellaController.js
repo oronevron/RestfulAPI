@@ -5,12 +5,20 @@ var connection = require('../../dbConnection');
 
 exports.get_all_measurements = function(req, res) {
 
+    var records_num = 3;
+
     // If parameter called "all" is sent with "true" value - Get all measurements
     if (req.query.all == "true") {
         var query = "SELECT measurements.*, sources.type AS source_type FROM measurements JOIN sources ON measurements.source_id = sources.id";
 
     // Otherwise - Get the most three new measurements for each source
     } else {
+
+        // If parameter called "records_num" is sent - fetch records_num records for each source (The default value is 3)
+        if (req.query.records_num != null) {
+            records_num = req.query.records_num;
+        }
+
         var query = "SELECT id, source_id, datetime, x_coordinate, y_coordinate, rain_power, temperature, humidity, sea_level, air_pollution, source_type FROM" +
                 " (SELECT measurements.*, sources.type AS source_type," +
                 " @source_id_rank := IF(@current_source_id = measurements.source_id, @source_id_rank + 1, 1) AS source_id_rank," +
@@ -19,8 +27,10 @@ exports.get_all_measurements = function(req, res) {
                 " JOIN sources ON measurements.source_id = sources.id" +
                 " ORDER BY measurements.source_id, measurements.datetime DESC" +
                 " ) ranked" +
-                " WHERE source_id_rank <= 3";
-        console.log(query);
+                " WHERE source_id_rank <= ?";
+        var table = [records_num];
+        query = mysql.format(query,table);
+        console.log("query: ", query);
     }
 
     connection.query(query, function (err, rows) {
@@ -107,7 +117,7 @@ exports.create_a_source = function(req, res) {
   var table = ["sources", req.body.type];
   query = mysql.format(query,table);
   console.log("query: ", query);
-  connection.query(query,function(err,rows){
+  connection.query(query,function(err,rows) {
     if(err) {
         res.json({"Error" : true, "Message" : err});
     } else {
