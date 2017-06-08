@@ -3,7 +3,8 @@ var connection = mysql.createConnection({
   host     : '',
   user     : '',
   password : '',
-  database : ''
+  database : '',
+  timezone: 'utc'
 });
 
 connection.connect(function(err){
